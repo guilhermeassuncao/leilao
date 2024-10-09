@@ -4,9 +4,7 @@ namespace Alura\Leilao\Model;
 
 class Lance
 {
-    /** @var Usuario */
     private $usuario;
-    /** @var float */
     private $valor;
 
     public function __construct(Usuario $usuario, float $valor)
