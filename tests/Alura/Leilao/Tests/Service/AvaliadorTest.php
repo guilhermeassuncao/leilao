@@ -9,15 +9,23 @@ use Alura\Leilao\Service\Avaliador;
 
 class AvaliadorTest extends TestCase
 {
+    private $leiloeiro;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->leiloeiro = new Avaliador();
+    }
+
     /**
      * @dataProvider entregaLeiloes
      */
     public function testMaiorValor(Leilao $leilao)
     {
-        $leiloeiro = new Avaliador();
-        $leiloeiro->avalia($leilao);
+        $this->leiloeiro->avalia($leilao);
 
-        $maiorValor = $leiloeiro->getMaiorValor();
+        $maiorValor = $this->leiloeiro->getMaiorValor();
 
         self::assertEquals(2500, $maiorValor); // Corrigido para 2500
     }
@@ -27,10 +35,9 @@ class AvaliadorTest extends TestCase
      */
     public function testMenorValor(Leilao $leilao)
     {
-        $leiloeiro = new Avaliador();
-        $leiloeiro->avalia($leilao);
+        $this->leiloeiro->avalia($leilao);
 
-        $menorValor = $leiloeiro->getMenorValor();
+        $menorValor = $this->leiloeiro->getMenorValor();
 
         self::assertEquals(1000, $menorValor);
     }
@@ -40,15 +47,35 @@ class AvaliadorTest extends TestCase
      */
     public function test3MaioresLances(Leilao $leilao)
     {
-        $leiloeiro = new Avaliador();
-        $leiloeiro->avalia($leilao);
+        $this->leiloeiro->avalia($leilao);
 
-        $maioresLances = $leiloeiro->getMaioresLances();
+        $maioresLances = $this->leiloeiro->getMaioresLances();
 
         self::assertCount(3, $maioresLances);
         self::assertEquals(2500, $maioresLances[0]->getValor());
         self::assertEquals(2000, $maioresLances[1]->getValor());
         self::assertEquals(1700, $maioresLances[2]->getValor());
+    }
+
+    public function testLeilaoVazioNaoPodeSerAvaliado() {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Não é possível avaliar um leilão vazio');
+
+        $leilao = new Leilao('Fusca');
+
+        $this->leiloeiro->avalia($leilao);
+    }
+
+    public function testLeilaoFinalizadoNaoPodeReceberLances() {
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Leilão já finalizado');
+
+        $leilao = new Leilao('Fiat 147');
+
+        $leilao->recebeLance(new Lance(new Usuario('Ian'), 1000));
+        $leilao->finaliza();
+
+        $this->leiloeiro->avalia($leilao);
     }
 
     public static function criarLeilaoOrdemCrescente()
@@ -111,9 +138,9 @@ class AvaliadorTest extends TestCase
     public static function entregaLeiloes()
     {
         return [
-            [self::criarLeilaoOrdemCrescente()],
-            [self::criarLeilaoOrdemDescrecente()],
-            [self::criarLeilaoOrdemAleatoria()]
+            'ordem-crescente' => [self::criarLeilaoOrdemCrescente()],
+            'ordem-descrecente' => [self::criarLeilaoOrdemDescrecente()],
+            'orderm-aleatoria' => [self::criarLeilaoOrdemAleatoria()]
         ];
     }
 }
